@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <queue>
+#include <deque>
 #include <cmath>
 #include <algorithm>
 using namespace std;
@@ -34,7 +34,7 @@ struct Node {
     Expands the node current and queues its children to queue q.
     Operators also defined in this function.
 */
-void queueingFunction_UCS(queue<Node> &q, const Node &current);
+void queueingFunction_UCS(deque<Node> &q, const Node &current);
 
 /*
     Queueing function for A* with Misplaced Tile Heuristic.
@@ -42,7 +42,7 @@ void queueingFunction_UCS(queue<Node> &q, const Node &current);
     Expands the node current and queues its children to queue q.
     Operators also defined in this function.
 */
-void queueingFunction_MTH(queue<Node> &q, const Node &current);
+void queueingFunction_MTH(deque<Node> &q, const Node &current);
 
 /*
     Queueing function for A* with Manhattan Distance Heuristic.
@@ -50,7 +50,7 @@ void queueingFunction_MTH(queue<Node> &q, const Node &current);
     Expands the node current and queues its children to queue q.
     Operators also defined in this function.
 */
-void queueingFunction_MDH(queue<Node> &q, const Node &current);
+void queueingFunction_MDH(deque<Node> &q, const Node &current);
 
 /*
     General Search function. 
@@ -72,6 +72,12 @@ void printState(const vector<int> &s);
 */
 int misplacedTile(const vector<int> &state);
 
+/*
+    A helper function for calculating the Manhattan Distance heuristic.
+    Compares the input state to the goal state in order to determine heuristic.
+*/
+int manhattanDistance(const vector<int> &state);
+
 int main() {
     int state_choice = 0; //stores user input choice for initial state
     vector<int> initial(NUM_PUZZLE + 1); //initial state
@@ -81,13 +87,13 @@ int main() {
         cin >> state_choice;
 
         if(state_choice == 1) { //use hard-coded initial state
-            initial = {1, 2, 3, 4, 0, 5, 6, 7, 8}; //default initial state
+            initial = {1, 2, 3, 4, 0, 6, 7, 5, 8}; //default initial state
         }
         else if(state_choice == 2) { //take user-input initial state
             //TO-DO: Implement input collection
             cout << "Enter your puzzle, using a zero to represent the blank.\n";
             cout << "Enter the first row, use space or tabs between numbers:\n";
-
+            
             cout << "Enter the second row, use space or tabs between numbers:\n";
             cout << "Enter the third row, use space or tabs between numbers:\n";
         }
@@ -104,29 +110,26 @@ int main() {
     } while(algorithm_choice != 1 && algorithm_choice != 2 && algorithm_choice != 3);
 
     bool success = false;
+    Node start(initial, 0, 0);
     //Uniform Cost Search
     if(algorithm_choice == 1) {
-        Node start(initial, 0, 0);
         success = generalSearch(start, 1);
     }
     //A* with the Misplaced Tile heuristic
     else if(algorithm_choice == 2) {
-
+        success = generalSearch(start, 2);
     }
     //A* with the Manhattan distance heuristic
     else if(algorithm_choice == 3) {
-
+        success = generalSearch(start, 3);
     }
 
-    if(success) {
-        cout << "Goal!!!" << endl;
-    }
-    else {
+    if(!success) {
         cout << "Could not solve puzzle. ):" << endl;
     }
 }
 
-void queueingFunction_UCS(queue<Node> &q, const Node &current) {
+void queueingFunction_UCS(deque<Node> &q, const Node &current) {
     unsigned b = 999; //stores location (index) of the "blank" tile
     //loop finds the location of the blank tile and store it into b
     for(unsigned i = 0; i < current.state.size(); i++) {
@@ -142,34 +145,34 @@ void queueingFunction_UCS(queue<Node> &q, const Node &current) {
     if(!((b % SIZE_SIDE) == 0)) { //if blank is not on the leftmost column, then it can move left
         temp = current.state;
         swap(temp.at(b), temp.at(b - 1));
-        q.push(Node(temp, current.cost + 1, 0));
+        q.push_back(Node(temp, current.cost + 1, 0));
     }
     
     //MOVE BLANK RIGHT
     if(!(((b+1) % SIZE_SIDE) == 0)) { //if blank is not on the rightmost column, then it can move right
         temp = current.state;
         swap(temp.at(b), temp.at(b + 1));
-        q.push(Node(temp, current.cost + 1, 0));
+        q.push_back(Node(temp, current.cost + 1, 0));
     }
 
     //MOVE BLANK UP
     if(b >= SIZE_SIDE) { //if blank is not in the top row, then it can move up
         temp = current.state;
         swap(temp.at(b), temp.at(b - SIZE_SIDE));
-        q.push(Node(temp, current.cost + 1, 0));
+        q.push_back(Node(temp, current.cost + 1, 0));
     }
     
     //MOVE BLANK DOWN
     if(b <= (NUM_PUZZLE - SIZE_SIDE)) { //if blank is not in the bottom row, then it can move down
         temp = current.state;
         swap(temp.at(b), temp.at(b + SIZE_SIDE));
-        q.push(Node(temp, current.cost + 1, 0));
+        q.push_back(Node(temp, current.cost + 1, 0));
     }
 
     return;
 }
 
-void queueingFunction_MTH(queue<Node> &q, const Node &current) {
+void queueingFunction_MTH(deque<Node> &q, const Node &current) {
     unsigned b = 999; //stores location (index) of the "blank" tile
     //loop finds the location of the blank tile and store it into b
     for(unsigned i = 0; i < current.state.size(); i++) {
@@ -186,8 +189,8 @@ void queueingFunction_MTH(queue<Node> &q, const Node &current) {
     if(!((b % SIZE_SIDE) == 0)) { //if blank is not on the leftmost column, then it can move left
         temp = current.state;
         swap(temp.at(b), temp.at(b - 1));
-        h = misplacedTile(temp);
-        q.push(Node(temp, current.cost + 1, h));
+        h = misplacedTile(temp); //get Misplaced Tile heuristic
+        q.push_back(Node(temp, current.cost + 1, h));
     }
     
     //MOVE BLANK RIGHT
@@ -195,7 +198,7 @@ void queueingFunction_MTH(queue<Node> &q, const Node &current) {
         temp = current.state;
         swap(temp.at(b), temp.at(b + 1));
         h = misplacedTile(temp);
-        q.push(Node(temp, current.cost + 1, h));
+        q.push_back(Node(temp, current.cost + 1, h));
     }
 
     //MOVE BLANK UP
@@ -203,7 +206,7 @@ void queueingFunction_MTH(queue<Node> &q, const Node &current) {
         temp = current.state;
         swap(temp.at(b), temp.at(b - SIZE_SIDE));
         h = misplacedTile(temp);
-        q.push(Node(temp, current.cost + 1, h));
+        q.push_back(Node(temp, current.cost + 1, h));
     }
     
     //MOVE BLANK DOWN
@@ -211,36 +214,115 @@ void queueingFunction_MTH(queue<Node> &q, const Node &current) {
         temp = current.state;
         swap(temp.at(b), temp.at(b + SIZE_SIDE));
         h = misplacedTile(temp);
-        q.push(Node(temp, current.cost + 1, h));
+        q.push_back(Node(temp, current.cost + 1, h));
+    }
+
+    return;
+}
+
+void queueingFunction_MDH(deque<Node> &q, const Node &current) {
+    unsigned b = 999; //stores location (index) of the "blank" tile
+    //loop finds the location of the blank tile and store it into b
+    for(unsigned i = 0; i < current.state.size(); i++) {
+        if(current.state.at(i) == 0) {
+            b = i;
+            break;
+        }
+    }
+
+    vector<int> temp;
+    int h = 0; 
+
+    //MOVE BLANK LEFT
+    if(!((b % SIZE_SIDE) == 0)) { //if blank is not on the leftmost column, then it can move left
+        temp = current.state;
+        swap(temp.at(b), temp.at(b - 1));
+        h = manhattanDistance(temp); //get Manhattan Distance heuristic
+        q.push_back(Node(temp, current.cost + 1, h));
+    }
+    
+    //MOVE BLANK RIGHT
+    if(!(((b+1) % SIZE_SIDE) == 0)) { //if blank is not on the rightmost column, then it can move right
+        temp = current.state;
+        swap(temp.at(b), temp.at(b + 1));
+        h = manhattanDistance(temp);
+        q.push_back(Node(temp, current.cost + 1, h));
+    }
+
+    //MOVE BLANK UP
+    if(b >= SIZE_SIDE) { //if blank is not in the top row, then it can move up
+        temp = current.state;
+        swap(temp.at(b), temp.at(b - SIZE_SIDE));
+        h = manhattanDistance(temp);
+        q.push_back(Node(temp, current.cost + 1, h));
+    }
+    
+    //MOVE BLANK DOWN
+    if(b <= (NUM_PUZZLE - SIZE_SIDE)) { //if blank is not in the bottom row, then it can move down
+        temp = current.state;
+        swap(temp.at(b), temp.at(b + SIZE_SIDE));
+        h = manhattanDistance(temp);
+        q.push_back(Node(temp, current.cost + 1, h));
     }
 
     return;
 }
 
 bool generalSearch(const Node &initial, const int &choice) {
-    queue<Node> nodes; //the queue to be used for search
-    nodes.push(initial);
+    deque<Node> nodes; //the queue to be used for search, implemented as a double-ended queue
+    //  About the queue:
+    //Nodes will be sorted by cost + heuristic value, least to greatest from the front of the
+    //vector to the back. As a result, pushes are done at the back and pops at the front 
+    //to make the algorithm easier to implement.
+    nodes.push_back(initial);
     Node current = nodes.front(); //the next node to be accessed
+    unsigned lowIndex = 0; //the index of the lowest-cost node in the queue as of the iteration
+    int lowestCost = 0; //the lowest cost in the queue thus far in the iteration
+    int totalNodes = 0; //the total number of nodes that the search algorithm expanded
+    unsigned maxNodes = 0; //the max number of nodes in the queue at any one time
 
     while(!nodes.empty()) { //perform search until we run out of nodes to search or the goal state is reached
-        current = nodes.front(); //TO-DO: MODIFY CRITERIA WITH WHICH TO POP THE NEXT NODE BASED ON COST + HEURISTIC
-        nodes.pop(); //get next state and pop it from the queue
+        //current = nodes.front();
+        //nodes.pop_front(); //get next state and pop it from the queue
+        //int min_index = 0; //the index of the minimum cost+heuristic-value-holding element in the queue
+        current = nodes.at(lowIndex);
+        nodes.erase(nodes.begin()+lowIndex);
 
-        cout << "Expanding state with cost " + to_string(current.cost) + ":\n";
+        cout << "The best state to expand with a g(n) = " + to_string(current.cost)  + " and h(n) = " + to_string(current.heuristic) + " is...\n";
         printState(current.state);
 
         if(current.state == GOAL_STATE) { //if the current state is the goal state, then we are done
+            cout << "Goal!!!\n\n";
+            cout << "To solve this problem the search algorithm expanded a total of " + to_string(totalNodes) + " nodes.\n";
+            cout << "The maximum number of nodes in the queue at any one time was " + to_string(maxNodes) + ".\n";
+            cout << "The depth of the goal node was " + to_string(current.cost) + ".\n";
             return true;
         }
         else { //otherwise expand on the children of the current state
+            totalNodes++;
+
             if(choice == 1) {
                 queueingFunction_UCS(nodes, current);
             }
             else if(choice == 2) {
-                //queueingFunction_MTH(nodes, current);
+                queueingFunction_MTH(nodes, current);
             }
             else {
-                //queueingFunction_MDH(nodes, current);
+                queueingFunction_MDH(nodes, current);
+            }
+            //Sort queue so that the lowest-costing nodes are at the front
+            //Perform only if NOT doing Uniform Cost Search so that it doesn't take even longer
+            if(choice != 1) {
+                lowestCost = 999999;
+                for(unsigned i = 0; i < nodes.size(); i++) {
+                    if((nodes.at(i).cost + nodes.at(i).heuristic) < lowestCost) {
+                        lowestCost = nodes.at(i).cost + nodes.at(i).heuristic;
+                        lowIndex = i;
+                    }
+                }
+            }
+            if(maxNodes < nodes.size()) {
+                maxNodes = nodes.size();
             }
         }
     }
@@ -262,9 +344,23 @@ void printState(const vector<int> &s) {
 
 int misplacedTile(const vector<int> &state) {
     int heuristic = 0;
-    for(unsigned i = 0; i < state.size(); i++) {
+    for(unsigned i = 0; i < state.size()-1; i++) {
         if(!(state.at(i) == GOAL_STATE.at(i))) {
             heuristic++;
+        }
+    }
+
+    return heuristic;
+}
+
+int manhattanDistance(const vector<int> &state) {
+    int heuristic = 0;
+    int size_side = (int) SIZE_SIDE; //avoid unsigned->int issues
+    for(unsigned i = 0; i < state.size(); i++) {
+        if(state.at(i) != 0) {
+            //Manhattan distance = |x1-x2| + |y1-y2|
+            heuristic += abs((state.at(i) % size_side) - (GOAL_STATE.at(i) % size_side)) + 
+                         abs((state.at(i) / size_side) - (GOAL_STATE.at(i) / size_side));
         }
     }
 
