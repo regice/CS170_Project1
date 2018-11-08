@@ -3,6 +3,7 @@
 #include <deque>
 #include <cmath>
 #include <algorithm>
+#include <string>
 using namespace std;
 
 const unsigned NUM_PUZZLE = 8; //size of the puzzle
@@ -80,7 +81,7 @@ int manhattanDistance(const vector<int> &state);
 
 int main() {
     int state_choice = 0; //stores user input choice for initial state
-    vector<int> initial(NUM_PUZZLE + 1); //initial state
+    vector<int> initial; //initial state
     cout << "Welcome to Brandon Tran's " + to_string(NUM_PUZZLE) + "-puzzle solver.\n" +
              "Type \"1\" to use a default puzzle, or \"2\" to enter your own puzzle." << endl;
     do {
@@ -90,12 +91,25 @@ int main() {
             initial = {1, 2, 3, 4, 0, 6, 7, 5, 8}; //default initial state
         }
         else if(state_choice == 2) { //take user-input initial state
-            //TO-DO: Implement input collection
+            //string rawInput;
+            //deque<string> numbers;
+            int tempInput;
             cout << "Enter your puzzle, using a zero to represent the blank.\n";
-            cout << "Enter the first row, use space or tabs between numbers:\n";
-            
-            cout << "Enter the second row, use space or tabs between numbers:\n";
-            cout << "Enter the third row, use space or tabs between numbers:\n";
+            cout << "Enter the first row, using a space or tabs between numbers:\n";
+            for(unsigned i = 0; i < SIZE_SIDE; i++) {
+                cin >> tempInput;
+                initial.push_back(tempInput);
+            }
+            cout << "Enter the second row, using a space or tabs between numbers:\n";
+            for(unsigned i = 0; i < SIZE_SIDE; i++) {
+                cin >> tempInput;
+                initial.push_back(tempInput);
+            }
+            cout << "Enter the third row, using a space or tabs between numbers:\n";
+            for(unsigned i = 0; i < SIZE_SIDE; i++) {
+                cin >> tempInput;
+                initial.push_back(tempInput);
+            }
         }
     } while(state_choice != 1 && state_choice != 2);
 
