@@ -9,4 +9,4 @@ C++ was the programming language of choice for this project because I felt the m
 ___________
 
 # Compiling
-To compile, run the command `g++ main.cpp`, which will create an executable called `a`. To run `a`, use the command `./a`.
+To compile, go to the src folder and run the command `make`, which will create an executable called `puzzle`. To run `puzzle`, use the command `./puzzle`.
